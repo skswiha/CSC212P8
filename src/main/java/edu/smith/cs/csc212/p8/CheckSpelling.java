@@ -52,30 +52,79 @@ public class CheckSpelling {
 		System.out.println(dictionary.getClass().getSimpleName()+": Lookup of items found="+fractionFound+" time="+nsPerItem+" ns/item");
 	}
 	
+	
+	//Creates a dataset with some words that are in the dictionary and some that are not
 	public static List<String> createMixedDataset(List<String> yesWords, int numSamples, double fractionYes) {
 		// Hint to the ArrayList that it will need to grow to numSamples size:
 		List<String> output = new ArrayList<>(numSamples);
 		// TODO: select numSamples * fractionYes words from yesWords; create the rest as no words.
+		int numYes = (int) (numSamples * fractionYes);
+		for (int i = 0; i < numYes; i++) {
+			output.add(yesWords.get(i));
+		}
+		
+		for(int i = numYes; i < numSamples; i++) {
+			output.add("jsdkfjsadklfj");
+		}
 		return output;
 	}
 	
+	/**
+	 * Load project Gutenberg book to words.
+	 * @param filePath try something like "PrideAndPrejudice.txt"
+	 * @return a list of words in the book, in order.
+	 */
+	public static List<String> loadBook(String filePath) {
+		long start = System.nanoTime();
+		List<String> words = new ArrayList<>();
+		try {
+			// Read from a file:
+			for (String line : Files.readAllLines(new File(filePath).toPath())) {
+				words.addAll(WordSplitter.splitTextToWords(line));
+			}
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't find dictionary.", e);
+		}
+		long end = System.nanoTime();
+		double time = (end - start) / 1e9;
+		System.out.println("Loaded " + words.size() + " from book in " + time +" seconds.");
+		return words;
+	}
+
+
 	
 	public static void main(String[] args) {
 		// --- Load the dictionary.
 		List<String> listOfWords = loadDictionary();
 		
 		// --- Create a bunch of data structures for testing:
+		long startLookup = System.nanoTime();
 		TreeSet<String> treeOfWords = new TreeSet<>(listOfWords);
+		long endLookup = System.nanoTime();
+		System.out.println("Insertion Time for TreeSet: " + (endLookup-startLookup)/listOfWords.size() + " ns/item");
+		startLookup = System.nanoTime();
 		HashSet<String> hashOfWords = new HashSet<>(listOfWords);
+		endLookup = System.nanoTime();
+		System.out.println("Insertion Time for HashSet: " + (endLookup-startLookup)/listOfWords.size() + " ns/item");
+		startLookup = System.nanoTime();
 		SortedStringListSet bsl = new SortedStringListSet(listOfWords);
+		endLookup = System.nanoTime();
+		System.out.println("Insertion Time for SSLSet: " + (endLookup-startLookup)/listOfWords.size() + " ns/item");
+		startLookup = System.nanoTime();
 		CharTrie trie = new CharTrie();
 		for (String w : listOfWords) {
 			trie.insert(w);
 		}
+		endLookup = System.nanoTime();
+		System.out.println("Insertion Time for Chartrie: " + (endLookup-startLookup)/listOfWords.size() + " ns/item");
+		startLookup = System.nanoTime();
 		LLHash hm100k = new LLHash(100000);
 		for (String w : listOfWords) {
 			hm100k.add(w);
 		}
+		endLookup = System.nanoTime();
+		System.out.println("Insertion Time for LLHash: " + (endLookup-startLookup)/listOfWords.size() + " ns/item");
+
 		
 		// --- Make sure that every word in the dictionary is in the dictionary:
 		timeLookup(listOfWords, treeOfWords);
@@ -83,6 +132,14 @@ public class CheckSpelling {
 		timeLookup(listOfWords, bsl);
 		timeLookup(listOfWords, trie);
 		timeLookup(listOfWords, hm100k);
+		
+		List<String> book = loadBook("pg844.txt");
+		
+		timeLookup(book, treeOfWords);
+		timeLookup(book, hashOfWords);
+		timeLookup(book, bsl);
+		timeLookup(book, trie);
+		timeLookup(book, hm100k);
 		
 		
 		for (int i=0; i<10; i++) {

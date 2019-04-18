@@ -4,6 +4,8 @@ import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import org.junit.Test;
+
 /**
  * This is a Character Trie that stores Strings!
  * @author jfoley
@@ -119,10 +121,16 @@ public class CharTrie extends AbstractSet<String> {
 		 * @return the count of nodes that exist in the Trie, starting from here.
 		 */
 		public int countNodes() {
-			int count = 1;
 			// loop over links
 			// if they're not null
 			// count them, too
+			int count = 1;
+			for (int i = 0; i < links.length; i++) {
+				if (links[i] != null) {
+					count++;
+					links[i].countNodes();
+				}
+			}
 			return count;
 		}
 	}
@@ -140,6 +148,8 @@ public class CharTrie extends AbstractSet<String> {
 	 * We would need to create an object that kept the recursion state around.
 	 * We will talk about depth-first search (part of the solution to this) next week.
 	 */
+	
+	
 	@Override
 	public Iterator<String> iterator() {
 		throw new UnsupportedOperationException("Trie Traversal is really hard.");
